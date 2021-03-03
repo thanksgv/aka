@@ -1,0 +1,61 @@
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" charset=euc-kr">
+        <title>Jquery Mobile UI 시작하기</title>
+        <link rel="stylesheet" href="https://code.jquery.com/mobile/1.0/jquery.mobile-1.0.min.css"/>
+        <script type="text/javascript" src="https://code.jquery.com/jquery-1.6.4.min.js"></script>
+        <script type="text/javascript" src="https://code.jquery.com/mobile/1.0/jquery.mobile-1.0.min.js"></script>
+    </head>
+    <body>
+
+        <div data-role="page" id="main">
+            <div data-role="header">
+                <h1>Hearder입니다.</h1>
+            </div>
+            <div data-role="content">
+                <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Minus id hic quam iste velit repudiandae, voluptatem, illum sapiente nostrum quae laborum veritatis distinctio ut? Reprehenderit dolorem voluptatum ab animi. Odit.</p>
+                <ul data-role="listview">
+                    <li data-role="list-divider">서브페이지</li>
+                    <li><a href="#sub" data-rel="dialog">서브페이지로 이동</a></li>
+                    <li><a href="#sub1">서브페이지로 이동</a></li>
+                    <li><a href="menu.html" target="_self">서브페이지로 이동</a></li>
+                    <li data-role="list-divider">서브페이지2</li>
+                    <li><a href="http://google.com" >서브페이지로 이동</a></li>
+                </ul>
+                <br/> <!-- 안주면 겹침 -->
+                <button style="top:10px;">ㅁㅁㅁㅁ</button>
+            </div>
+            <div data-role="footer">
+                인천일보 아카데미
+            </div>
+        </div>
+
+        <div data-role="page" id="sub">
+            <div data-role="header">
+                <h1>서브 Hearder입니다.</h1>
+            </div>
+            <div data-role="content">
+                <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. </p>
+                <a href="#main">메인페이지로 이동</a>
+            </div>
+            <div data-role="footer">
+                인천일보 아카데미
+            </div>
+        </div>
+
+        <div data-role="page" id="sub1">
+            <div data-role="header">
+                <h1>서브1 Hearder입니다.</h1>
+            </div>
+            <div data-role="content">
+                <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. </p>
+                <a href="#main">메인페이지로 이동</a>
+            </div>
+            <div data-role="footer">
+                인천일보 아카데미
+            </div>
+        </div>
+
+
+    </body>
+</html>
