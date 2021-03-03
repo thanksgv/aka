@@ -1,0 +1,75 @@
+<html>
+    <head>
+        <meta name="viewport" content="initial-scale=1, maximum-scale=1"/>
+        <title>영화차트</title>
+        <link rel="stylesheet" href="http://code.jquery.com/mobile/1.3.2/jquery.mobile-1.3.2.min.css" />
+        <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+        <script src="http://code.jquery.com/mobile/1.3.2/jquery.mobile-1.3.2.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/3.0.1/handlebars.js"></script>
+        <style>
+            #btnMore {
+                width:100%;
+                border-radius: 5px;
+                padding: 10px;
+                cursor: pointer;
+                margin-top:20px;
+                font-weight: 500;
+                
+            }
+        </style>
+    </head>
+    <body>
+        <div data-role="page">
+            <div data-role="header" data-theme="b"><h2>도서검색</h2></div>
+            <div data-role="content">
+                <input type="text" id="txtQuery" value="자바"/>
+                <br/>
+                <ul data-role="listview" id="list"></ul>
+                <script id="temp" type="text/x-handlebars-template">
+                {{#each documents}}
+                    <li><a href="{{{url}}}" target="_blank"><img src="{{thumbnail}}" width=50 /> {{{title}}} | {{{authors}}}<br/>{{{contents}}}<br/>{{{price}}}원</a></li>
+                {{/each}}
+                </script>
+            </div>
+            <div data-role="footer" data-theme="b"><h2>인천일보아카데미</h2></div>
+        </div>
+    </body>
+    <script>
+        getList();
+        var size = 10;
+        $("#txtQuery").on("keydown", function(e){
+            if(e.keyCode==13){ getList(); }
+        });
+        /*
+        $("#btnMore").on("click", function() {
+            size += 5;
+            getList();
+        });
+        */
+        function morebtn() {
+            size += 5;
+            getList();
+        }
+        function getList(){
+            var query=$("#txtQuery").val();
+            $.ajax({
+                type:"get",
+                url:"https://dapi.kakao.com/v3/search/book?target=title",
+                headers:{"Authorization": "KakaoAK 696c16eaa4a3dfc09b778dd60435bb87"},
+                data:{"query":query, "size":size},
+                dataType:"json",
+                success:function(data){
+                    var temp=Handlebars.compile($("#temp").html());
+                    $("#list").html(temp(data)).listview("refresh");
+                    $(".moreb").remove();
+                    if(data.meta.pageable_count > 0)
+                        $("#list").after("<p class='moreb'><button id='btnMore' onclick='morebtn();'>더보기</button></p>");
+                    else
+                        $("#list").html("<li>결과가 없습니다.</li>").listview("refresh");
+                }
+            });
+
+            
+        }
+    </script>
+</html>
