@@ -23,8 +23,9 @@
     <body>
         <!--
 
-            ajax 사용시 많이 사용되는 내용 정리 했습니다.
-            도움되었으면 하는 생각에 만들어 봤어요. 참고하세요.
+            ajax 사용시 많이 사용되는 내용 간단히 정리 했습니다.
+            도움되었으면 하는 생각에 만들어 봤어요. 웹&개발자반 화이팅!
+            **** API key는 꼭 본인 걸로 바꾸세요~ ****
 
             1. 인트로 페이지
             검색어가 없을 경우 인트로페이지가 나옴(각자에 맞게 꾸며야함)
@@ -81,6 +82,7 @@
             </div>
             <div data-role="content" style="height:100%;">
                 
+                <!-- 로딩바를 배치하고 display none 으로 해주고 ajax에서 display block 과 none 으로 제어 -->
                 <div class="ui-loader ui-corner-all ui-body-a ui-loader-default">
                     <span class="ui-icon-loading" style="display:block;width:46px;height:46px;"></span>
                 </div>
@@ -121,6 +123,7 @@
         var size = 20;
         var page = 1;
         var end = false;
+
         $("#txtQuery").on("keyup", function(e){
             /*
             if(e.keyCode==13){ 
@@ -130,48 +133,46 @@
                 getList(); 
             }
             */
-            size = 20;
-            page = 1;
-            end = false;
-        getList(); 
+            valInit();
+            getList(); 
 
         });
 
         $("#soption").on("change", function(e){
-            /*
-            if(e.keyCode==13){ 
-                size = 20;
-                page = 1;
-                end = false;
-                getList(); 
-            }
-            */
-            size = 20;
-            page = 1;
-            end = false;
-        getList(); 
+
+            valInit();
+            getList(); 
 
         });
 
+        //top 버튼 클릭하면 animate 효과 scrollTop 은 스크롤 위치(0이면 최상단), 400 인 mili sec 0.4초
         $('.top').on("click", function() {
             $('html, body').animate({ scrollTop : 0 }, 400);
 	        return false;
         });
 
+        //초기화 function, 검색할 때마다 페이지를 1과 end 값을 false 로 변경
+        function valInit() {
+            page = 1;
+            end = false;
+        }
 
-
+        //모든 스크롤감지
         $(window).scroll( function() {
             //var scrollTop = $(document).scrollTop();
             //var innerHeight = $(document).innerHeight();
             //var scrollHeight = $(window).height();
 
+            /* 스크롤감지 200 을 넘어서면 top버튼 fadein, 200 이하인 경우 top 버튼 fadeout */
             if ($(document).scrollTop() > 200 ) {
                 $('.top').fadeIn();
             } else {
                 $('.top').fadeOut();
             }
 
-            if ($(document).height() <= $(window).scrollTop() + $(window).height() + 1 && Math.round($(window).scrollTop()) > 1) {
+            /* 현재 위치의 스크롤과 창 크기를 계산해서 스크롤이 최하단일 때는 감지하여 다음페이지 불러옴, 
+            처음에는 스크롤과 창크기가 0 이기 때문에 스크롤이 0보다 클때만 되게 && */
+            if ( $(document).height() <= $(window).scrollTop() + $(window).height() + 1 && Math.round($(window).scrollTop()) > 1) {
 
                 page++;
                 getList();
@@ -182,7 +183,7 @@
 
         /*
         $("#btnMore").on("click", function() {
-            size += 5;
+            size += 10;
             getList();
         });
         */
@@ -200,34 +201,52 @@
                 data:{"query":query, "size":size, "page":page},
                 dataType:"json",
                 success:function(data){
-                    $("#intro").fadeOut();
+                    
+                    $("#intro").fadeOut(); /* ajax가 성공하는 순간 인트로화면 fadeout */
 
                     var temp=Handlebars.compile($("#temp").html());
-                    $(".moreb").remove();
+                    $(".moreb").remove(); /* 이전 검색에서 더보기 버튼이 있으면 제거해줌 */
                     console.log(data.meta.pageable_count + " / " + page + " / " + $("#soption").val() + " / " + $("#txtQuery").val());
 
                     if(data.meta.pageable_count > 0 && data.meta.pageable_count > page * size && page == 1) {
+                        /* 검색된 갯수가 0보다 크고, 검색된 갯수가 페이지*사이즈(한페이지에 나오는 데이터수) 보다 크고,
+                        첫페이지인 경우, 데이터를 html() 하고 더보기 버튼 추가해줌 */
                         $("#list").html(temp(data)).listview("refresh");
                         $("#list").after("<p class='moreb'><button id='btnMore' onclick='morebtn();'>더보기</button></p>");
-                    }else if(data.meta.pageable_count > 0 && data.meta.pageable_count > page * size && page > 1) {
+                    } else if(data.meta.pageable_count > 0 && data.meta.pageable_count > page * size && page > 1) {
+                        /* 검색된 갯수가 0보다 크고, 검색된 갯수가 페이지*사이즈(한페이지에 나오는 데이터수) 보다 크고,
+                        첫페이지가 아닌 경우(2~) 첫페이지의 데이터에 다음페이지 append() 하고 더보기 버튼 추가해줌 */
                         $("#list").append(temp(data)).listview("refresh");
                         $("#list").after("<p class='moreb'><button id='btnMore' onclick='morebtn();'>더보기</button></p>");
+                    } else if(data.meta.pageable_count > 0 && data.meta.pageable_count < page * size && page == 1) {
+                        /* 검색된 갯수가 0보다 크고, 검색된 갯수가 페이지*사이즈(한페이지에 나오는 데이터수) 보다 작고,
+                        첫페이지인 경우, 검색된 갯수가 한페이지 이하라는 말 */
+                        $("#list").html(temp(data)).listview("refresh");
+                        $("#list").append("<li style='text-align:center;'>더이상 결과가 없습니다.</li>").listview("refresh");
+                        end = true;
                     } else if(data.meta.pageable_count == 0)
+                        /* 검색된 갯수가 0인 경우, 결과 없음 알려줌 */
                         $("#list").html("<li style='text-align:center;'>결과가 없습니다.</li>").listview("refresh");
                     else if(data.meta.pageable_count < page * size && end == false) {
+                        /* 검색된 갯수가 한페이지의 보여줄 수 있는 최대치인 page*size 보다 작은 경우,
+                        결과가 끝인것을 알려주고, 한번만 실행되게끔 end 를 true 로 바꿔줌*/
                         $("#list").append("<li style='text-align:center;'>더이상 결과가 없습니다.</li>").listview("refresh");
                         end = true;
                     }
+
                 },beforeSend:function(){
+                    //ajax로 데이터를 전송하기 직전 로딩바 display block
                     $('.ui-loader').css('display','block');
                 },
                 error:function(request,status,error){
+                    //ajax가 여러사유로 에러인 경우. 현재는 backspace로 txtQuery 값이 없는 경우만 체크
                     //alert("code = "+ request.status + " message = " + request.responseText + " error = " + error);
                     $("#list").empty();
                     $(".moreb").remove();
                     $("#intro").fadeIn();
                 },
                 complete:function(data) {
+                    //ajax처리 완료 로딩바 display none(성공과는 다르며, 에러가 난 경우에도 실행됩니다.)
                     $('.ui-loader').css('display','none');
                 }
 
