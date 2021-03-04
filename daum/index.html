@@ -14,32 +14,170 @@
                 cursor: pointer;
                 margin-top:20px;
                 font-weight: 500;
-
+            }
+            .display-none {
+                display:none;
             }
         </style>
     </head>
     <body>
-        <div data-role="page">
-            <div data-role="header" data-theme="b"><h2>도서검색</h2></div>
-            <div data-role="content">
-                <input type="text" id="txtQuery" value="" placeholder="검색할 도서명을 입력하세요."/>
-                <br/>
+        <!--
+
+            ajax 사용시 많이 사용되는 내용 정리 했습니다.
+            도움되었으면 하는 생각에 만들어 봤어요. 참고하세요.
+
+            1. 인트로 페이지
+            검색어가 없을 경우 인트로페이지가 나옴(각자에 맞게 꾸며야함)
+            
+            2-1. 검색부분1
+            검색을 할 경우 인트로페이지 fadeOut
+            검색어를 지울 경우 인트로페이지 fadeIn
+            검색할 떄마다 검색내용 페이지 추가(html)
+            keydown 일 경우 입력전의 검색어를 가져와서 keyup 으로 변경
+            
+            2-2. 검색부분2
+            스크롤이 최하단일 경우 자동 다음페이지 추가(append)
+            1페이지 이상일 경우 더보기 버튼 생성
+            마지막 페이지일 경우 "마지막 페이지" 알림
+            검색내용이 없을 경우 "결과없음" 알림
+
+            2-3. 검색부분3
+            검색설정(제목, 작가, 출판사) 옵션처리해서 해당 옵션으로 검색
+            검색설정 옵션변경시 검색기능
+            검색을 할 경우 로딩중 display block (빠르면 안보임)
+            검색완료일 경우 로딩중 display none
+            -> 보통 diplaynone 클래스를 만들어서 addClass 나 removeClass 로 하지만
+            -> 현재 jquerymobile 에서 로딩바가 있어 사용하느라고 display 속성을 이용했습니다.
+
+            3. 최상단이동
+            스크롤이 200 이상일 경우 top 버튼 생성 fadeIn
+            스크롤이 200 이하일 경우 top 버튼 사라짐 fadeOut
+            top 버튼 클릭 시 anmation 기능으로 최상단으로 이동
+
+        -->
+        
+        <div data-role="page" id="main">
+            <div data-role="header" data-theme="b" data-position="fixed">
+                <!-- <a href="index.html" target="_self" data-icon="home" data-iconpos="notext">home</a> -->
+                <a href="index.html" target="_self" data-icon="home" >home</a>
+                <h2><a href="index.html" target="_self" style="text-decoration: none; color:#fff;">(아이콘) 책검색</a></h2>
+                <a href="index.html" target="_self" data-icon="bars" >menu</a>
+                <div style="padding:0 10px; display: table; width:95%">
+                    <div style="display:table-cell; width:20%;">
+                        <select id="soption">
+                            <option value="title" selected>책이름</option>
+                            <option value="person">글쓴이</option>
+                            <option value="publisher">출판사</option>
+                        </select>
+                    </div>
+                    <div style="display:table-cell; padding-left:2%">
+                        <input type="text" id="txtQuery" value="" size="20" placeholder="검색할 도서명을 입력하세요." />
+                    </div>
+
+
+                </div>
+            </div>
+            <div data-role="content" style="height:100%;">
+                
+                <div class="ui-loader ui-corner-all ui-body-a ui-loader-default">
+                    <span class="ui-icon-loading" style="display:block;width:46px;height:46px;"></span>
+                </div>
+                
                 <ul data-role="listview" id="list"></ul>
                 <script id="temp" type="text/x-handlebars-template">
-                {{#each documents}}
-                    <li><a href="{{{url}}}" target="_blank"><img src="{{thumbnail}}" width=50 /> {{{title}}} | {{{authors}}}<br/>{{{contents}}}<br/>{{{price}}}원</a></li>
-                {{/each}}
+                    {{#each documents}}
+                        <li>
+                            <a href="{{{url}}}" target="_blank">
+                                <img src="{{thumbnail}}" width=70 />
+                                <div>
+                                    <p style="font-weight: bold; font-size:small;">{{{title}}}</p>
+                                    <p>저자 : {{{authors}}} / 출판사 : {{publisher}}</p>
+                                    <p>{{{contents}}}</p>
+                                    <p>
+                                        <span class="price"><strike>{{{price}}}</strike></span>
+                                        <span data-icon="arrow-r"> -> </span>
+                                        <span class="sale_price" style="font-weight: bold; font-size:small;"> {{{sale_price}}}</span> 원</p>
+                                </div>
+                            </a>
+                        </li>
+                    {{/each}}
                 </script>
+                <div id="intro">
+                    <h3>인트로내용<br/><br/>새로나온 책(신작소개)<br/>베스트 셀러<br/>추천 책들 소개 등<br/>내용 있으면 좋겠음<br/><br/>판매량, 평점, 후기는?</h3>
+                </div>
+                
             </div>
-            <div data-role="footer" data-theme="b"><h2>인천일보아카데미</h2></div>
+            <div data-role="footer" data-theme="b" data-position="fixed">
+                <a href="#" onclick="return false;" class="top" data-icon="arrow-u" style="position:absolute; right:0; bottom:7px;">top</a>
+                <h2>make by thanksgv</h2>
+            </div>
         </div>
     </body>
     <script>
-        getList();
-        var size = 10;
-        $("#txtQuery").on("keydown", function(e){
-            if(e.keyCode==13){ getList(); }
+
+        //getList();
+        var size = 20;
+        var page = 1;
+        var end = false;
+        $("#txtQuery").on("keyup", function(e){
+            /*
+            if(e.keyCode==13){ 
+                size = 20;
+                page = 1;
+                end = false;
+                getList(); 
+            }
+            */
+            size = 20;
+            page = 1;
+            end = false;
+        getList(); 
+
         });
+
+        $("#soption").on("change", function(e){
+            /*
+            if(e.keyCode==13){ 
+                size = 20;
+                page = 1;
+                end = false;
+                getList(); 
+            }
+            */
+            size = 20;
+            page = 1;
+            end = false;
+        getList(); 
+
+        });
+
+        $('.top').on("click", function() {
+            $('html, body').animate({ scrollTop : 0 }, 400);
+	        return false;
+        });
+
+
+
+        $(window).scroll( function() {
+            //var scrollTop = $(document).scrollTop();
+            //var innerHeight = $(document).innerHeight();
+            //var scrollHeight = $(window).height();
+
+            if ($(document).scrollTop() > 200 ) {
+                $('.top').fadeIn();
+            } else {
+                $('.top').fadeOut();
+            }
+
+            if ($(document).height() <= $(window).scrollTop() + $(window).height() + 1 && Math.round($(window).scrollTop()) > 1) {
+
+                page++;
+                getList();
+            }
+            else console.log( $(window).scrollTop() + $(window).height() + " / " + $(document).height() + " / " + $(window).scrollTop() + " / " + $(window).height());
+
+        });
+
         /*
         $("#btnMore").on("click", function() {
             size += 5;
@@ -47,26 +185,51 @@
         });
         */
         function morebtn() {
-            size += 5;
+            //size += 10;
+            page++;
             getList();
         }
         function getList(){
             var query=$("#txtQuery").val();
             $.ajax({
                 type:"get",
-                url:"https://dapi.kakao.com/v3/search/book?target=title",
+                url:"https://dapi.kakao.com/v3/search/book?target="+$("#soption").val(),
                 headers:{"Authorization": "KakaoAK 696c16eaa4a3dfc09b778dd60435bb87"},
-                data:{"query":query, "size":size},
+                data:{"query":query, "size":size, "page":page},
                 dataType:"json",
                 success:function(data){
+                    $("#intro").fadeOut();
+
                     var temp=Handlebars.compile($("#temp").html());
-                    $("#list").html(temp(data)).listview("refresh");
                     $(".moreb").remove();
-                    if(data.meta.pageable_count > 0)
+                    console.log(data.meta.pageable_count + " / " + page + " / " + $("#soption").val() + " / " + $("#txtQuery").val());
+
+                    if(data.meta.pageable_count > 0 && data.meta.pageable_count > page * size && page == 1) {
+                        $("#list").html(temp(data)).listview("refresh");
                         $("#list").after("<p class='moreb'><button id='btnMore' onclick='morebtn();'>더보기</button></p>");
-                    else
-                        $("#list").html("<li>결과가 없습니다.</li>").listview("refresh");
+                    }else if(data.meta.pageable_count > 0 && data.meta.pageable_count > page * size && page > 1) {
+                        $("#list").append(temp(data)).listview("refresh");
+                        $("#list").after("<p class='moreb'><button id='btnMore' onclick='morebtn();'>더보기</button></p>");
+                    } else if(data.meta.pageable_count == 0)
+                        $("#list").html("<li style='text-align:center;'>결과가 없습니다.</li>").listview("refresh");
+                    else if(data.meta.pageable_count < page * size && end == false) {
+                        $("#list").append("<li style='text-align:center;'>더이상 결과가 없습니다.</li>").listview("refresh");
+                        end = true;
+                    }
+                },beforeSend:function(){
+                    $('.ui-loader').css('display','block');
+                },
+                error:function(request,status,error){
+                    //alert("code = "+ request.status + " message = " + request.responseText + " error = " + error);
+                    $("#list").empty();
+                    $(".moreb").remove();
+                    $("#intro").fadeIn();
+                },
+                complete:function(data) {
+                    $('.ui-loader').css('display','none');
                 }
+
+
             });
 
             
