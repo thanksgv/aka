@@ -1,7 +1,7 @@
 <html>
     <head>
         <meta name="viewport" content="initial-scale=1, maximum-scale=1"/>
-        <title>영화차트</title>
+        <title>책검색</title>
         <link rel="stylesheet" href="https://code.jquery.com/mobile/1.3.2/jquery.mobile-1.3.2.min.css" />
         <script src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
         <script src="https://code.jquery.com/mobile/1.3.2/jquery.mobile-1.3.2.min.js"></script>
@@ -34,6 +34,8 @@
             검색어를 지울 경우 인트로페이지 fadeIn
             검색할 떄마다 검색내용 페이지 추가(html)
             keydown 일 경우 입력전의 검색어를 가져와서 keyup 으로 변경
+            -> keydown인 경우 backspace로 지울 때 제대로 검색이 되지 않습니다.
+            -> enter key 인 경우에는 keydown 이나 keyup 이나 상관없습니다.
             
             2-2. 검색부분2
             스크롤이 최하단일 경우 자동 다음페이지 추가(append)
